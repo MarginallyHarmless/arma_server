@@ -1,7 +1,6 @@
 // The page can read this file. Never put an API key or other secret here.
 export default {
-  // If direct browser access is blocked, replace with your deployed Worker URL
-  // followed by /v2/ (see README.md).
-  apiBase: 'https://api.reforgermods.net/v2/',
+  // Public API relay; browser access is limited to this site's origin.
+  apiBase: 'https://spearhead-watch-api.bogdandraghici024.workers.dev/v2/',
   refreshSeconds: 60,
 };
