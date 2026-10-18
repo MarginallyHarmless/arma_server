@@ -69,7 +69,7 @@ test('API rediscovery follows a changing ID on each minute check',async()=>{
 });
 test('rate limit blocks subsequent metadata calls',async()=>{
   let count=0;const api=new ServerApi('https://example.test/v2/',async()=>{count++;return new Response('',{status:429,headers:{'Retry-After':'120'}});},()=>now);
-  await assert.rejects(api.get('servers'),/slow down/);await assert.rejects(api.get('servers'),/wait/);assert.equal(count,1);assert.equal(api.blockedUntil,now+120000);
+  await assert.rejects(api.get('servers'),{status:429});await assert.rejects(api.get('servers'),/rate limit/i);assert.equal(count,1);assert.equal(api.blockedUntil,now+120000);
 });
 test('a disappeared detail listing is rediscovered once',async()=>{
   let searches=0;const api=new ServerApi('https://example.test/v2/',async url=>{
