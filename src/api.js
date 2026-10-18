@@ -3,12 +3,12 @@ import {FAVORITE,pickServer,parseSnapshot,parseHistory,retryDelay} from './core.
 export class ServerApi {
   constructor(base, fetcher=(...args)=>fetch(...args), clock=Date.now) { this.base=base.replace(/\/?$/,'/'); this.fetcher=fetcher; this.clock=clock; this.blockedUntil=0; }
   async get(path) {
-    if (this.clock()<this.blockedUntil) throw new Error('The data service asked us to wait before retrying.');
+    if (this.clock()<this.blockedUntil) throw new Error('Data service rate limit. Waiting before retrying.');
     let response;
     try { response=await this.fetcher(this.base+path,{headers:{Accept:'application/json'},credentials:'omit',signal:AbortSignal.timeout(15000)}); }
-    catch (cause) { console.warn('Server request failed:',cause?.name,cause?.message); throw new Error('Could not read the data service. The connection may be unavailable or browser access may need the proxy described in Setup.'); }
+    catch (cause) { console.warn('Server request failed:',cause?.name,cause?.message); throw new Error('Cannot reach the data service. Retrying automatically.'); }
     if (!response.ok) {
-      const error=new Error(response.status===429 ? 'The data service asked us to slow down.' : `The data service returned HTTP ${response.status}.`);
+      const error=new Error(response.status===429 ? 'Data service rate limit. Retrying after a delay.' : `The data service returned HTTP ${response.status}.`);
       error.status=response.status;
       if ([429,503].includes(response.status)) this.blockedUntil=this.clock()+retryDelay(0,response.headers.get('Retry-After'),this.clock());
       throw error;

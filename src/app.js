@@ -44,7 +44,7 @@ function notify(message) {
   }
 }
 function queueAlert() {
-  if (!statusError && gate.check(snapshot,state.prefs)) notify(snapshot.queue===0 ? 'The queue is empty and a player slot is open.' : `The queue is down to ${snapshot.queue} people.`);
+  if (!statusError && gate.check(snapshot,state.prefs)) notify(snapshot.queue===0 ? 'Queue empty. A player slot is available.' : `Queue: ${snapshot.queue} players.`);
 }
 function setPrefs() {
   $('alerts').checked=state.prefs.enabled; $('sound').checked=state.prefs.sound;
@@ -69,7 +69,7 @@ function renderStatus() {
   }
   if (demo) label='Example data';
   $('status').className='pill '+kind;text('status-text',label);
-  text('freshness',snapshot ? (age===null ? 'Source freshness unknown' : `Source reading ${age<60000 ? Math.floor(age/1000)+'s' : duration(age)} ago`) : 'Waiting for a first reading');
+  text('freshness',snapshot ? (age===null ? 'Source freshness unknown' : `Source reading ${age<60000 ? Math.floor(age/1000)+'s' : duration(age)} ago`) : 'Waiting for data');
   const warning=statusError || (snapshot && !isFresh ? 'These are the last reported values. Fresh data is unavailable, so alerts are paused.' : '');
   $('message').hidden=!warning;text('message',warning);
   text('countdown',demo ? 'Preview · no live requests' : busy ? 'Checking server…' : document.hidden ? 'Checks resume on return' : `Next check in ${Math.max(0,Math.ceil((nextDue-now)/1000))}s`);
@@ -82,8 +82,8 @@ function renderSnapshot() {
   text('players',number(s.players));text('capacity',' / '+number(s.maxPlayers));text('queue',number(s.queue));text('queue-capacity',s.queueMax===null ? '' : ' / '+number(s.queueMax));
   const percentage=s.players!==null && s.maxPlayers ? Math.min(100,100*s.players/s.maxPlayers) : 0;
   $('occupancy').style.width=percentage+'%'; $('occupancy').parentElement.setAttribute('aria-label',`${number(s.players)} of ${number(s.maxPlayers)} player slots occupied`);
-  text('player-note',s.players!==null && s.maxPlayers ? (s.players>=s.maxPlayers ? 'Server is full' : `${number(Math.max(0,s.maxPlayers-s.players))} player slots open`) : 'Player count unavailable');
-  text('queue-note',s.queue===null ? 'Queue information unavailable' : s.queue===0 ? 'No one waiting to join' : 'Total waiting to join');
+  text('player-note',s.players!==null && s.maxPlayers ? (s.players>=s.maxPlayers ? 'Server full' : `${number(Math.max(0,s.maxPlayers-s.players))} player slots open`) : 'Player count unavailable');
+  text('queue-note',s.queue===null ? 'Queue information unavailable' : s.queue===0 ? 'Queue empty' : 'Players waiting to join');
   text('scenario',s.scenarioName || 'Scenario not reported');text('mode',mode || 'Arma Reforger');
   const platforms=Array.isArray(s.platforms) ? s.platforms.map(p=>({pc:'PC',xbox:'Xbox',psn:'PlayStation'}[p] || String(p))).join(' · ') : '';
   text('platforms',platforms || 'Platforms unavailable');text('mods',s.modCount!==null ? `${number(s.modCount)} mods` : 'Mods unavailable');
@@ -148,8 +148,8 @@ function drawChart() {
   text('peak',points.length ? number(Math.max(...points.map(p=>p.max))) : '—');
   text('average',points.length ? number(points.reduce((sum,p)=>sum+p.avg,0)/points.length) : '—');
   text('low',points.length ? number(Math.min(...points.map(p=>p.min))) : '—');
-  const source=activeSeries.local ? 'Readings saved in this browser · only while open' : `API history · ${activeSeries.bucket || 'bucketed'} readings · checked ${time(activeSeries.fetchedAt)}`;
-  text('history-note',`${demo?'Example data · ':''}${source}${activeSeries.stale?' · provider marked stale':''}${historyError?' · '+historyError:''}. Gaps remain empty. Shading shows min–max; line shows average.`);
+  const source=activeSeries.local ? 'Local history · collected while open' : `API history · ${activeSeries.bucket || 'bucketed'} readings · checked ${time(activeSeries.fetchedAt)}`;
+  text('history-note',`${demo?'Example data · ':''}${source}${activeSeries.stale?' · provider marked stale':''}${historyError?' · '+historyError:''}. Line: average · Shading: min–max.`);
 }
 
 async function loadHistories() {

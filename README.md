@@ -42,7 +42,7 @@ The Worker accepts only GET requests for the app's required public Reforger Mods
 
 ## Using the dashboard
 
-- Keep the tab open for local alerts. Enable **Queue alerts**, choose a threshold, and optionally enable sound. Browser notifications need an explicit permission grant using the notification button. In-page alerts still work if permission is denied.
+- Keep the tab open for local alerts. Under **Queue alerts**, check **Enabled**, choose a threshold, and optionally enable sound. Browser notifications need an explicit permission grant using the notification button. In-page alerts still work if permission is denied.
 - An alert fires when the queue reaches the threshold. It rearms after fresh data rises above it and has a 10-minute cooldown within that visit. A zero queue requires a known open player slot. Unknown, stale or offline readings do not trigger alerts.
 - **Refresh** makes an extra check, limited to once per 10 seconds and subject to the service's retry window.
 - The server details expand to show address, region, version, server FPS, session ID and provider-estimated average wait per queue position, when supplied. That wait figure is not a guarantee of your total queue time.

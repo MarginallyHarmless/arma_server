@@ -2,6 +2,8 @@
 
 ## Completed
 
+- Replaced promotional copy with the server name and functional labels. Removed decorative section captions and the footer slogan, shortened status/help text, and reduced header spacing.
+
 - Removed the restart estimate and scenario-change alerts at the owner's request. Their inference logic, saved settings and obsolete tests were removed; population history now fetches only the selected range.
 
 - 20 deterministic Node checks pass. Coverage includes identity discovery, changing server IDs/IPs, missing and zero counts, fractional source age, stale readings, history parsing, alert hysteresis and cooldown, retry windows and proxy route/header restrictions, including rejecting upstream redirects.
