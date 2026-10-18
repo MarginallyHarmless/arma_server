@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark"><meta name="theme-color" content="#111816">
+  <meta name="description" content="Your SpearHead EU6 server at a glance: population, queue, scenario and estimated restarts.">
+  <title>SpearHead · Server watch</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css">
+  <script type="module" src="./src/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to dashboard</a>
+  <div class="app">
+    <header>
+      <a class="brand" href="./" aria-label="SpearHead server watch home"><svg viewBox="0 0 32 36" aria-hidden="true"><path d="M16 2 30 29 16 23 2 29Z"/><path d="M16 10v24"/></svg><span>SPEARHEAD<span class="brand-sub">SERVER WATCH</span></span></a>
+      <div class="refresh-controls"><span id="countdown">Every 60 seconds</span><button id="refresh" class="button" type="button"><span aria-hidden="true">↻</span> Refresh</button></div>
+    </header>
+
+    <main id="main">
+      <div id="demo-banner" class="banner demo" hidden>Example data · Design preview only. Live monitoring and notifications are disabled. <a href="./">Open live dashboard →</a></div>
+      <div class="intro"><div><p class="eyebrow">YOUR FAVOURITE SERVER <span class="eyebrow-line"></span></p><h1>Eyes on Everon<span>.</span></h1><p class="subtitle">[EU6] SpearHead CORE KUKAs EVERON</p></div><div class="connection"><span id="status" class="pill"><i></i><span id="status-text">Connecting</span></span><p id="freshness">Waiting for a first reading</p></div></div>
+      <div id="message" class="banner warning" role="status" hidden></div>
+
+      <section class="overview" aria-label="Server overview">
+        <div class="metrics">
+          <article class="card population"><div class="card-top"><h2>Players online</h2><span class="tiny-icon" aria-hidden="true">◉</span></div><div class="big-number"><span id="players">—</span><span class="capacity" id="capacity"> / —</span></div><div class="meter" role="img" aria-label="Server occupancy"><div id="occupancy"></div></div><p id="player-note" class="small">Waiting for server data</p></article>
+          <article class="card queue"><div class="card-top"><h2>In the queue</h2><span class="tiny-icon" aria-hidden="true">≋</span></div><div class="big-number"><span id="queue">—</span><span class="capacity" id="queue-capacity"></span></div><p id="queue-note" class="small">Total waiting to join</p></article>
+          <article class="card restart"><div class="card-top"><h2>Last restart estimate</h2><span class="tag">ESTIMATED</span></div><div id="restart-value" class="restart-value">Not enough data</div><p id="restart-note" class="small">Looking for a population drop and recovery.</p><details class="evidence"><summary>How we estimate this</summary><p id="restart-evidence">A sharp population drop followed by sustained recovery can suggest a restart. A crash or mass disconnect can look the same. Session changes observed while this page is open provide another signal. Neither gives confirmed server uptime.</p></details></article>
+        </div>
+        <article class="card map-card" aria-label="Current scenario">
+          <div class="artwork"><img id="map-image" alt="" hidden referrerpolicy="no-referrer"><div id="image-placeholder" class="map-placeholder"><svg viewBox="0 0 140 100" aria-hidden="true"><path d="m10 26 40-15 40 14 40-15v65L90 90 50 75 10 90Z M50 11v64M90 25v65"/></svg><span>Scenario artwork unavailable</span></div><div class="art-shade"></div><span class="map-tag">CURRENT SCENARIO</span><div class="map-caption"><span id="mode" class="mode">Arma Reforger</span><h2 id="scenario">Waiting for the server</h2></div></div>
+          <div class="map-bottom"><span id="platforms">Platforms unavailable</span><span id="mods">— mods</span></div>
+        </article>
+      </section>
+
+      <section class="card history-card" aria-labelledby="history-heading"><div class="section-heading"><div><p class="eyebrow">THE BIGGER PICTURE</p><h2 id="history-heading">Population history</h2></div><div class="ranges" role="group" aria-label="History range"><button type="button" data-range="6h" aria-pressed="false">6 hours</button><button type="button" data-range="24h" aria-pressed="true">24 hours</button><button type="button" data-range="7d" aria-pressed="false">7 days</button></div></div>
+        <div class="history-stats"><span>Peak <strong id="peak">—</strong></span><span>Average <strong id="average">—</strong></span><span>Low <strong id="low">—</strong></span><span class="legend"><i></i> Players</span></div>
+        <div class="chart-wrap"><svg id="chart" viewBox="0 0 1040 220" role="img" aria-label="Population chart, waiting for data"></svg><div id="chart-empty">Population history will appear here.</div><output id="chart-tooltip" hidden></output></div>
+        <p id="history-note" class="small">API history loads separately from the one-minute status checks.</p>
+      </section>
+
+      <section class="card alerts-card" aria-labelledby="alerts-heading"><div><p class="eyebrow">CATCH YOUR MOMENT</p><h2 id="alerts-heading">Let me know when it’s quieter</h2><p class="small">Alerts run while this page is open. Background tabs may be delayed.</p></div><div class="alert-options"><label class="switch-label"><input id="alerts" type="checkbox"><span>Queue alerts</span></label><label class="threshold-label">Queue at most <select id="threshold" aria-label="Queue alert threshold"><option value="0">0</option><option value="1">1</option><option value="3">3</option><option value="5">5</option><option value="10">10</option><option value="20">20</option><option value="50">50</option></select></label><label class="switch-label"><input id="sound" type="checkbox"><span>Sound</span></label><label class="switch-label"><input id="map-alerts" type="checkbox"><span>Scenario changes</span></label><button id="notifications" class="button secondary" type="button">Enable browser notifications</button></div><p id="alert-note" class="small">Queue count is everyone waiting, not your position. An empty queue alert also requires an open slot.</p></section>
+
+      <details class="server-details"><summary>Server details &amp; setup <span aria-hidden="true">+</span></summary><div class="detail-grid"><dl><div><dt>Address</dt><dd id="address">Unknown</dd></div><div><dt>Region</dt><dd id="region">Unknown</dd></div><div><dt>Game version</dt><dd id="version">Unknown</dd></div><div><dt>Server FPS</dt><dd id="fps">Unknown</dd></div><div><dt>Average wait per queue position</dt><dd id="wait">Unknown</dd></div><div><dt>Session</dt><dd id="session">Unknown</dd></div></dl><div class="setup"><h3>One-minute checks, wherever you are</h3><p>This page checks for new status every 60 seconds while visible. It checks again when you return. The data provider has its own collection delay.</p><p>Population history comes from the API. Your observed session changes and extra readings are saved in this browser. Closing the tab stops local monitoring and alerts.</p><p>If browser access to the API fails, the included setup guide explains how to connect the small proxy. <a href="./README.md">Open setup guide ↗</a></p><p id="storage-note"></p></div></div></details>
+    </main>
+    <footer><span>Built for the wait. Ready for the island.</span><a href="https://reforgermods.net/" target="_blank" rel="noreferrer">Data by Reforger Mods ↗</a></footer>
+  </div><div id="toast" role="status" hidden></div>
+</body>
+</html>

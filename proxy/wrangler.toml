@@ -1,0 +1,6 @@
+name = "spearhead-watch-api"
+main = "worker.js"
+compatibility_date = "2026-10-18"
+
+[vars]
+ALLOWED_ORIGIN = "https://marginallyharmless.github.io"
