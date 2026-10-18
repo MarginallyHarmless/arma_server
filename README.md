@@ -6,15 +6,14 @@ A static dashboard for **[EU6] SpearHead CORE KUKAs EVERON**, ready for GitHub P
 
 - Player count, total queue, capacity, current scenario artwork, platforms and mod count.
 - Population charts for 6 hours, 24 hours and 7 days, where the API has coverage.
-- A clearly labelled restart estimate from a population collapse and sustained recovery, or an observed session-ID change. This is not confirmed uptime.
-- Queue and scenario alerts, optional sound and browser notifications.
+- Queue alerts, optional sound and browser notifications.
 - **Status checks every 60 seconds while the page is visible.** Overdue checks run when you return to the tab. Browsers can suspend background pages, so this is not a guaranteed background timer. Slow requests, service failures and rate limits delay checks.
 - API history refreshes at most every 5 minutes per selected range. It is separate from the 60-second player/queue checks and remains at the provider's bucket resolution.
 - Server discovery on every status check follows the exact EU6 name prefix, rather than pinning an IP address. Multiple current matches pause monitoring. If the server changes its name, update `FAVORITE` in `src/core.js` and the matching constant in `proxy/worker.js`.
 
 ## Deployment status and browser access
 
-The dashboard is live at **https://marginallyharmless.github.io/arma_server/** and reads real server data through `https://spearhead-watch-api.bogdandraghici024.workers.dev/v2/`. Live player and queue counts, scenario details and 24-hour population history were verified on 18 October 2026. All 28 automated checks pass.
+The dashboard is live at **https://marginallyharmless.github.io/arma_server/** and reads real server data through `https://spearhead-watch-api.bogdandraghici024.workers.dev/v2/`. Live player and queue counts, scenario details and 24-hour population history were verified on 18 October 2026. All 20 automated checks pass.
 
 The proxy is a small serverless function deployed in the owner's Cloudflare account, separately from GitHub Pages. It does not need a rented VPS, Windows PC or always-running process. It relays public API responses; it does not run a minute-by-minute background collector or send alerts after the tab closes. Direct browser requests failed in testing; the configured proxy resolves that connection.
 
@@ -45,22 +44,17 @@ The Worker accepts only GET requests for the app's required public Reforger Mods
 
 - Keep the tab open for local alerts. Enable **Queue alerts**, choose a threshold, and optionally enable sound. Browser notifications need an explicit permission grant using the notification button. In-page alerts still work if permission is denied.
 - An alert fires when the queue reaches the threshold. It rearms after fresh data rises above it and has a 10-minute cooldown within that visit. A zero queue requires a known open player slot. Unknown, stale or offline readings do not trigger alerts.
-- Scenario alerts compare fresh observations. The first reading is a baseline, not a change.
 - **Refresh** makes an extra check, limited to once per 10 seconds and subject to the service's retry window.
 - The server details expand to show address, region, version, server FPS, session ID and provider-estimated average wait per queue position, when supplied. That wait figure is not a guarantee of your total queue time.
 - To view the design without live requests, add `?demo=1` to the address. The banner explicitly labels all values as example data. Demo mode does not save data or send alerts.
 
-## What the estimates mean
-
-Population inference scans the last 24 hours of fine-grained data for a sharp drop on a busy server, followed by two sustained recovery readings within 30 minutes. It rejects gaps, coarse hourly history, capacity changes and local server-ID boundaries. API bucket timestamps are treated as a conservative ±5-minute event window.
-
-A session-ID change is bracketed between the last old reading and first new reading. The first session observation only tells us how long we have observed it. IP changes alone never count as restarts. A crash, a new session or a mass disconnect can resemble a restart. Quiet or very short restarts can be missed.
+## History continuity
 
 Provider history may not follow a newly assigned API server ID. The app clears remote history caches when that ID changes and never joins disconnected local segments across IDs. The favorite's local history remains stored under its name-based key.
 
 ## Privacy and storage
 
-Preferences, session observations and up to 7 days of local player samples stay in this browser's local storage. They are not uploaded to GitHub or synced across devices. Clearing site data removes them. If storage is blocked, monitoring works for the current visit and shows a storage notice.
+Preferences and up to 7 days of local player samples stay in this browser's local storage. They are not uploaded to GitHub or synced across devices. Clearing site data removes them. If storage is blocked, monitoring works for the current visit and shows a storage notice.
 
 The browser contacts the public API (or your configured proxy) and Bohemia Interactive's CDN for scenario artwork. No analytics, advertising, external JavaScript dependencies, credentials or private player data are included. The map card shows scenario artwork supplied by the API, which may be a logo rather than a geographic map.
 

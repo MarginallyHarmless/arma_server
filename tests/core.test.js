@@ -1,12 +1,11 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {FAVORITE,matches,pickServer,parseSnapshot,fresh,ageOf,parseHistory,inferRestart,observe,AlertGate,retryDelay,restore,safeImage} from '../src/core.js';
+import {FAVORITE,matches,pickServer,parseSnapshot,fresh,ageOf,parseHistory,AlertGate,retryDelay,restore,safeImage} from '../src/core.js';
 import {ServerApi} from '../src/api.js';
 const now=Date.parse('2026-10-18T17:00:00Z');
 const row=(changes={})=>({id:'a',name:FAVORITE,online:true,present:true,lastSeen:new Date(now).toISOString(),...changes});
 const raw=(changes={},dataset={})=>({server:{...row(),players:100,maxPlayers:128,queue:4,queueMax:50,joinable:true,sessionId:'session-a',scenarioId:'map-a',...changes},dataset:{snapshotAgeSeconds:10,...dataset}});
 const snap=(changes={},at=now)=>parseSnapshot(raw({lastSeen:new Date(at).toISOString(),...changes}),at);
-const series=(values,step=300)=>({points:values.map((v,i)=>({t:now/1000-10800+i*step,avg:v,min:v,max:v,cap:128,sourceId:null})),stale:false,fetchedAt:now});
 test('favorite matching excludes similarly named EU servers',()=>{
   assert(matches(FAVORITE+' | Crossplay'));assert(matches(FAVORITE.toLowerCase()));assert(!matches(FAVORITE+' 2'));assert(!matches(FAVORITE.replace('EU6','EU5')));
 });
@@ -41,42 +40,6 @@ test('history preserves decimals and does not replace missing data with zero',()
   const h=parseHistory({points:[{t:1700000000,avg:null,min:0,max:3,cap:128},{t:1700000300,avg:42.5,cap:128},{t:1700000600,avg:0,cap:128}]},now);
   assert.equal(h.points.length,2);assert.equal(h.points[0].avg,42.5);assert.equal(h.points[1].avg,0);
   assert.throws(()=>parseHistory({points:[{t:1700000000,avg:8,min:20,cap:128}]},now),/valid/);
-});
-test('population collapse requires sustained refill and yields a timing interval',()=>{
-  const h=series([120,118,122,0,20,70,90]),r=inferRestart(h,now);
-  assert(r);assert.equal(r.baseline,120);assert.equal(r.by-r.after,600000);
-  assert.equal(inferRestart(series([120,118,122,0,20,70]),now),null);
-  assert.equal(inferRestart(series([120,118,122,0,0,0,0]),now),null);
-});
-test('ordinary dips, quiet servers and gradual departure are not restart events',()=>{
-  for (const values of [[120,118,122,45,80,100,120],[4,3,4,0,1,4,4],[120,100,80,60,40,20,0,20,40,60,80,100]]) assert.equal(inferRestart(series(values),now),null);
-});
-test('gaps, server ID boundaries and stale history cannot manufacture restarts',()=>{
-  const h=series([120,118,122,0,20,70,90]);h.points.slice(3).forEach(p=>p.t+=600);assert.equal(inferRestart(h,now),null);
-  const moved=series([120,118,122,0,20,70,90]);moved.points.slice(3).forEach(p=>p.sourceId='new');assert.equal(inferRestart(moved,now),null);
-  assert.equal(inferRestart({...series([120,118,122,0,20,70,90]),stale:true},now),null);
-});
-test('partial buckets and coarse hourly history cannot produce a restart',()=>{
-  const h=series([120,118,122,0,20,70,90]);assert.equal(inferRestart(h,h.points.at(-1).t*1000+60000),null);
-  assert.equal(inferRestart(series([120,118,122,0,20,70,90],3600),now+18000000),null);
-});
-test('bucket minimum can expose a brief disruption',()=>{
-  const h=series([120,118,122,100,118,120]);h.points[3].min=0;assert(inferRestart(h,now));
-});
-test('session first observation is a baseline and a change is bracketed',()=>{
-  let result=observe({history:[]},snap(),now);assert.equal(result.state.session.by,undefined);
-  result=observe(result.state,snap({sessionId:'session-b'},now+60000),now+60000);
-  assert.equal(result.state.session.by-result.state.session.after,60000);
-});
-test('IP change alone is not a session restart; old readings do not roll state back',()=>{
-  let state=observe({history:[]},snap(),now).state;
-  state=observe(state,snap({host:'new'},now+60000),now+60000).state;assert.equal(state.session.by,undefined);
-  const prior=state.session.last;state=observe(state,snap({sessionId:'old'}),now).state;assert.equal(state.session.last,prior);assert.equal(state.session.id,'session-a');
-});
-test('scenario baseline is quiet, later fresh changes alert, stale readings do not',()=>{
-  const first=observe({history:[]},snap(),now);assert(!first.scenarioChanged);
-  assert(observe(first.state,snap({scenarioId:'map-b'},now+60000),now+60000).scenarioChanged);
-  assert(!observe(first.state,snap({scenarioId:'map-c',present:false},now+60000),now+60000).scenarioChanged);
 });
 test('queue alerts have hysteresis, cooldown and do not rearm on stale readings',()=>{
   const g=new AlertGate(),p={enabled:true,threshold:5};assert(g.check(snap(),p,now));assert(!g.check(snap(),p,now));

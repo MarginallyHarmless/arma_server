@@ -2,12 +2,14 @@
 
 ## Completed
 
-- 28 deterministic Node checks pass. Coverage includes identity discovery, changing server IDs/IPs, missing and zero counts, fractional source age, stale readings, history parsing, restart evidence, session changes, alert hysteresis and cooldown, retry windows and proxy route/header restrictions, including rejecting upstream redirects.
+- Removed the restart estimate and scenario-change alerts at the owner's request. Their inference logic, saved settings and obsolete tests were removed; population history now fetches only the selected range.
+
+- 20 deterministic Node checks pass. Coverage includes identity discovery, changing server IDs/IPs, missing and zero counts, fractional source age, stale readings, history parsing, alert hysteresis and cooldown, retry windows and proxy route/header restrictions, including rejecting upstream redirects.
 - Static build produces a dependency-free frontend in `dist/`.
 - Desktop dashboard inspected in the browser using explicitly labelled example data; scenario artwork loaded from the API's supplied Bohemia CDN URL.
 - Phone layout inspected in a 390-pixel frame. The content viewport was 375 pixels after its scrollbar; document width and scroll width matched. Chart labels remained readable and range controls worked without horizontal overflow.
 - 6-hour and 7-day range controls updated the chart and selected state.
-- A labelled local API fixture exercised the real data-loading path: server discovery, detail fetch, population history, restart estimate, counts and an in-page queue alert. It did not send any real game-server notification.
+- A labelled local API fixture exercised the real data-loading path: server discovery, detail fetch, population history, counts and an in-page queue alert. It did not send any real game-server notification.
 - The real browser refresh loop made two automatic status/discovery requests **60.007 seconds apart** against that fixture. History was fetched once and reused during the next minute's status check. No manual refresh was used between the two readings.
 - Live connection failure showed unknown values, an explanation and a retry countdown, rather than treating unavailable data as zero.
 - No personal history, credentials or generated user settings are included in this package.
@@ -22,4 +24,4 @@
 
 - OS notification delivery and audible sound depend on the user's permission and browser. The in-page queue alert was verified; system permission was not requested during testing.
 
-Example and fixture values are synthetic. Live observations above are timestamped verification snapshots, not permanently current counts. Both frontend hosting and live proxy connectivity are verified. No closed-tab collection or exact restart time is claimed.
+Example and fixture values are synthetic. Live observations above are timestamped verification snapshots, not permanently current counts. Both frontend hosting and live proxy connectivity are verified. No closed-tab collection is claimed.

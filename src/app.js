@@ -1,5 +1,5 @@
 import config from '../config.js';
-import {STORAGE_KEY,restore,ageOf,fresh,observe,AlertGate,inferRestart,duration,retryDelay} from './core.js';
+import {STORAGE_KEY,restore,ageOf,fresh,observe,AlertGate,duration,retryDelay} from './core.js';
 import {ServerApi} from './api.js';
 
 const $=id=>document.getElementById(id), text=(id,value)=>{$(id).textContent=value;};
@@ -47,7 +47,7 @@ function queueAlert() {
   if (!statusError && gate.check(snapshot,state.prefs)) notify(snapshot.queue===0 ? 'The queue is empty and a player slot is open.' : `The queue is down to ${snapshot.queue} people.`);
 }
 function setPrefs() {
-  $('alerts').checked=state.prefs.enabled; $('sound').checked=state.prefs.sound; $('map-alerts').checked=state.prefs.mapAlerts;
+  $('alerts').checked=state.prefs.enabled; $('sound').checked=state.prefs.sound;
   // Older stored thresholds can be any integer, not just the quick choices.
   if (![...$('threshold').options].some(o=>Number(o.value)===state.prefs.threshold)) $('threshold').add(new Option(String(state.prefs.threshold),String(state.prefs.threshold)));
   $('threshold').value=String(state.prefs.threshold);
@@ -75,7 +75,6 @@ function renderStatus() {
   text('countdown',demo ? 'Preview · no live requests' : busy ? 'Checking server…' : document.hidden ? 'Checks resume on return' : `Next check in ${Math.max(0,Math.ceil((nextDue-now)/1000))}s`);
   $('refresh').disabled=busy || (!demo && (now-lastAttempt<10000 || now<api.blockedUntil));
   document.title=demo ? 'Example · SpearHead server watch' : snapshot && !statusError && isFresh ? `${number(snapshot.players)}/${number(snapshot.maxPlayers)} · Q ${number(snapshot.queue)} · SpearHead` : 'SpearHead · Server watch';
-  renderRestart();
 }
 function renderSnapshot() {
   const s=snapshot;
@@ -100,23 +99,6 @@ function renderSnapshot() {
   text('address',s.host && s.port ? `${s.host}:${s.port}` : 'Not reported');text('region',s.region || 'Not reported');text('version',s.version || 'Not reported');
   text('fps',s.fps===null ? 'Not reported' : number(s.fps));text('session',s.sessionId || 'Not reported');
   text('wait',s.positionAvgWaitTime===null ? 'Not reported' : `${number(s.positionAvgWaitTime)} seconds (provider estimate)`);
-}
-
-function renderRestart() {
-  const now=Date.now(), remote=histories.get(`${snapshot?.id}:24h`);
-  const local=inferRestart({points:state.history,fetchedAt:now,stale:false},now,true);
-  const fromApi=inferRestart(remote,now), population=fromApi && (!local || fromApi.by>=local.by) ? fromApi : local;
-  const session=state.session;
-  const event=population && (!session?.by || population.after>session.by) ? population : session?.by ? {...session,kind:'session'} : null;
-  if (event) {
-    text('restart-value',event.kind==='session' && event.by-event.after>180000 ? `${duration(now-event.by)}–${duration(now-event.after)} ago` : `~${duration(now-(event.after+event.by)/2)} ago`);
-    text('restart-note',`${event.kind==='session' ? 'Session change observed' : 'Population drop + recovery'} · ${dateTime(event.after)}–${time(event.by)}`);
-    text('restart-evidence',event.kind==='session' ? 'A different session ID was observed between these readings. This suggests a new session, but does not prove the exact restart time. Long gaps widen the estimate.' : `${Math.round(event.baseline)} players before; minimum ${Math.round(event.low)}; recovered to at least ${Math.round(event.recovered)} across two readings.\nSource: ${event.local ? 'readings saved in this browser' : 'API population history, last 24 hours'}.\nThis is an estimate. A crash or mass disconnect can look the same; brief or quiet restarts may be missed.`);
-  } else {
-    text('restart-value',remote || state.history.length>=6 ? 'No event detected' : 'Not enough data');
-    text('restart-note',session ? `Current session observed for ${duration(now-session.first)}. Exact start unknown.` : 'Looking for a population drop and recovery.');
-    text('restart-evidence','We look for a sharp drop from a busy server, then two sustained recovery readings within 30 minutes. Gaps and IP changes do not count as restarts. A crash or mass disconnect can look the same. No event detected does not mean the server has not restarted.');
-  }
 }
 
 function getSeries() {
@@ -172,7 +154,7 @@ function drawChart() {
 
 async function loadHistories() {
   if (!snapshot || historyBusy || demo || Date.now()<api.blockedUntil) return;
-  const id=snapshot.id, ranges=[...new Set([currentRange(),'24h'])];
+  const id=snapshot.id, ranges=[currentRange()];
   historyBusy=true;historyError='';drawChart();
   try {
     for (const range of ranges) {
@@ -183,7 +165,7 @@ async function loadHistories() {
       histories.set(`${id}:${range}`,data);
     }
   } catch {historyError='History update unavailable; retrying with the next check';}
-  finally {historyBusy=false;drawChart();renderRestart();}
+  finally {historyBusy=false;drawChart();}
 }
 
 async function refresh(manual=false) {
@@ -195,9 +177,8 @@ async function refresh(manual=false) {
     const incoming=await api.snapshot();
     if (snapshot?.id!==incoming.id) {histories.clear();mode=null;modeKey='';historyError='';}
     snapshot=incoming;statusError='';failures=0;
-    const observation=observe(state,snapshot);state=observation.state;save();
+    state=observe(state,snapshot).state;save();
     renderSnapshot();drawChart();queueAlert();
-    if (observation.scenarioChanged && state.prefs.mapAlerts) notify(`The scenario changed to ${snapshot.scenarioName || 'a new scenario'}.`);
     await loadHistories();
     const key=`${snapshot.scenarioModId}:${snapshot.scenarioId}`;
     if (key!==modeKey || (!mode && Date.now()-modeTried>3600000)) {
@@ -213,13 +194,13 @@ async function refresh(manual=false) {
 }
 
 $('refresh').addEventListener('click',()=>refresh(true));
-for (const [id,key] of [['alerts','enabled'],['sound','sound'],['map-alerts','mapAlerts']]) $(id).addEventListener('change',()=>{
+for (const [id,key] of [['alerts','enabled'],['sound','sound']]) $(id).addEventListener('change',()=>{
   state.prefs[key]=$(id).checked;if (state.prefs.sound) prepareAudio();save();queueAlert();
 });
 $('threshold').addEventListener('change',()=>{state.prefs.threshold=Number($('threshold').value);save();queueAlert();});
 $('notifications').addEventListener('click',async()=>{
   if (demo || !('Notification' in window)) return;
-  try { const result=await Notification.requestPermission();toast(result==='granted' ? 'Browser notifications are ready. Choose which alerts to enable.' : 'Browser notifications are blocked. In-page alerts still work. You can change this in your browser’s site settings.'); }
+  try { const result=await Notification.requestPermission();toast(result==='granted' ? 'Browser notifications are ready. Enable queue alerts to receive notifications.' : 'Browser notifications are blocked. In-page alerts still work. You can change this in your browser’s site settings.'); }
   catch { toast('This browser could not enable notifications. In-page alerts still work.'); }
   setPrefs();
 });
