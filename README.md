@@ -14,9 +14,9 @@ A static dashboard for **[EU6] SpearHead CORE KUKAs EVERON**, ready for GitHub P
 
 ## Deployment status and browser access
 
-The frontend is published at **https://marginallyharmless.github.io/arma_server/**. GitHub Pages deployment and all 27 automated checks passed on 18 October 2026. **Live server data is not connected yet:** direct API requests failed from both the local preview and the published page in the test browser. The dashboard shows a connection issue and unknown counts until that connection is resolved. The included proxy is prepared for the next step.
+The dashboard is live at **https://marginallyharmless.github.io/arma_server/** and reads real server data through `https://spearhead-watch-api.bogdandraghici024.workers.dev/v2/`. Live player and queue counts, scenario details and 24-hour population history were verified on 18 October 2026. All 28 automated checks pass.
 
-The proxy is a small serverless function, hosted separately from GitHub Pages. It does not need a rented VPS, Windows PC or always-running process. It relays public API responses; it does not run a minute-by-minute background collector or send alerts after the tab closes. No Cloudflare deployment has been performed. Opening the separate Cloudflare dashboard was blocked by automatic approval review pending explicit account-access authorization.
+The proxy is a small serverless function deployed in the owner's Cloudflare account, separately from GitHub Pages. It does not need a rented VPS, Windows PC or always-running process. It relays public API responses; it does not run a minute-by-minute background collector or send alerts after the tab closes. Direct browser requests failed in testing; the configured proxy resolves that connection.
 
 ## Publish on GitHub Pages
 
@@ -29,9 +29,9 @@ The proxy is a small serverless function, hosted separately from GitHub Pages. I
 
 The workflow runs on pushes and manual requests. It does **not** use scheduled GitHub Actions to poll the game server. GitHub's scheduled workflows have a minimum five-minute interval and are not a one-minute collector.
 
-## Connect the optional proxy if needed
+## Redeploy or move the proxy
 
-1. In your own Cloudflare account, create a Worker using **Workers & Pages → Create application → Create Worker**. The dashboard labels may vary. No payment or account signup has been performed for you.
+1. The current Worker is named `spearhead-watch-api`. Open it in Cloudflare's **Workers & Pages**, or create a new Worker in your own account if moving the deployment.
 2. Replace its example script with the full contents of `proxy/worker.js`.
 3. Add the plain-text environment variable `ALLOWED_ORIGIN` with value `https://marginallyharmless.github.io` (no repository path and no trailing slash). If you use a custom domain, use that origin instead. Save and deploy the Worker.
 4. Copy the HTTPS Worker address. In this repository's `config.js`, replace `apiBase` with that address followed by `/v2/`, for example `https://spearhead-watch-api.YOUR-SUBDOMAIN.workers.dev/v2/`.
@@ -74,7 +74,7 @@ npm run build
 python -m http.server 8767 --directory dist
 ```
 
-Open `http://localhost:8767/` or `http://localhost:8767/?demo=1`. Use an HTTP server; opening `index.html` as a `file://` URL will not load the JavaScript modules correctly.
+Open `http://localhost:8767/?demo=1` for the local design preview. The production proxy allows the published GitHub Pages origin only. For local live integration, use a separate development Worker with `ALLOWED_ORIGIN=http://localhost:8767` and a local `config.js` override. Use an HTTP server; opening `index.html` as a `file://` URL will not load the JavaScript modules correctly.
 
 `dist/` contains only the deployable frontend. `proxy/` is deployed separately. The test suite uses deterministic responses and does not contact the game server. See `VALIDATION.md` for completed checks and remaining deployment verification.
 

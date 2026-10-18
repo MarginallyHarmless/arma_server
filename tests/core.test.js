@@ -34,6 +34,8 @@ test('unknown, future, provider-stale and missing presence pause freshness',()=>
 test('identity and artwork are validated',()=>{
   assert.throws(()=>parseSnapshot(raw({name:'different server'}),now),/identity/);
   assert.equal(safeImage('javascript:alert(1)'),null);assert.equal(safeImage('https://unknown.example/map.jpg'),null);
+  const metadata=snap({gameVersion:'1.8.0.13',supportedClients:['PLATFORM_PC','PLATFORM_XBL','PLATFORM_PSN']});
+  assert.equal(metadata.version,'1.8.0.13');assert.deepEqual(metadata.platforms,['pc','xbox','psn']);
 });
 test('history preserves decimals and does not replace missing data with zero',()=>{
   const h=parseHistory({points:[{t:1700000000,avg:null,min:0,max:3,cap:128},{t:1700000300,avg:42.5,cap:128},{t:1700000600,avg:0,cap:128}]},now);

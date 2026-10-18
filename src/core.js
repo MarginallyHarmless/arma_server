@@ -29,6 +29,8 @@ export function parseSnapshot(root, now = Date.now()) {
   const age = ages.length ? Math.max(...ages) : null;
   return {
     ...s,
+    version: s.gameVersion || s.version,
+    platforms: Array.isArray(s.supportedClients) ? s.supportedClients.map(p=>({PLATFORM_PC:'pc',PLATFORM_XBL:'xbox',PLATFORM_PSN:'psn'}[p] || p)) : s.platforms,
     players: numeric(s.players), maxPlayers: numeric(s.maxPlayers), queue: numeric(s.queue), queueMax: numeric(s.queueMax),
     fps: numeric(s.fps), modCount: numeric(s.modCount), positionAvgWaitTime: numeric(s.positionAvgWaitTime),
     scenarioModId: s.scenarioModId || s.hostedScenarioModId,

@@ -2,7 +2,7 @@
 
 ## Completed
 
-- 27 deterministic Node checks pass. Coverage includes identity discovery, changing server IDs/IPs, missing and zero counts, fractional source age, stale readings, history parsing, restart evidence, session changes, alert hysteresis and cooldown, retry windows and proxy route/header restrictions.
+- 28 deterministic Node checks pass. Coverage includes identity discovery, changing server IDs/IPs, missing and zero counts, fractional source age, stale readings, history parsing, restart evidence, session changes, alert hysteresis and cooldown, retry windows and proxy route/header restrictions, including rejecting upstream redirects.
 - Static build produces a dependency-free frontend in `dist/`.
 - Desktop dashboard inspected in the browser using explicitly labelled example data; scenario artwork loaded from the API's supplied Bohemia CDN URL.
 - Phone layout inspected in a 390-pixel frame. The content viewport was 375 pixels after its scrollbar; document width and scroll width matched. Chart labels remained readable and range controls worked without horizontal overflow.
@@ -13,11 +13,13 @@
 - No personal history, credentials or generated user settings are included in this package.
 - Source uploaded to the public repository `MarginallyHarmless/arma_server`; Pages configured to deploy through GitHub Actions.
 - GitHub Actions run `39153069939`, attempt 2: all tests, build and Pages deployment succeeded. The first attempt preceded Pages activation and failed only at the configure-pages step.
-- Published frontend loaded at `https://marginallyharmless.github.io/arma_server/`. Its API request returned a browser connection failure; no live population or queue reading is claimed.
+- Cloudflare Worker `spearhead-watch-api.bogdandraghici024.workers.dev` deployed with `ALLOWED_ORIGIN=https://marginallyharmless.github.io`. Configuration update passed GitHub Actions run `39154357077` and deployed to Pages.
+- Fixed a deployed-runtime incompatibility: Workers rejects `redirect: 'error'`; the relay now uses `manual` and explicitly rejects redirect responses without following or forwarding their Location header.
+- Published frontend loaded real data through the proxy: at approximately 21:33 Europe/Bucharest, 128/128 players, queue 27/50, 147 mods, current scenario `SH_Kuka's_Everon_II`, server address, FPS and session ID. The 24-hour chart contained 288 five-minute readings.
+- Live API schema inspection identified `gameVersion` and `supportedClients`; these are normalized for the detail and platform displays. The scenario mode label also accepts the provider's campaign localization key.
 
 ## Deployment checks still required
 
-- Deploy the supplied Cloudflare Worker and configure `apiBase`, then verify current API readings through it. Worker routing and header logic were tested locally; no Worker has been deployed. Automatic approval review blocked opening the separate Cloudflare account without explicit authorization.
 - OS notification delivery and audible sound depend on the user's permission and browser. The in-page queue alert was verified; system permission was not requested during testing.
 
-Example and fixture values are synthetic. They are not a report of current server population. API responses themselves were reachable through direct browser navigation, but webpage requests were unsuccessful from both localhost and GitHub Pages. Frontend hosting is verified; live data connectivity and closed-tab collection are not claimed.
+Example and fixture values are synthetic. Live observations above are timestamped verification snapshots, not permanently current counts. Both frontend hosting and live proxy connectivity are verified. No closed-tab collection or exact restart time is claimed.

@@ -25,10 +25,18 @@ export async function handle(request, env, fetcher=fetch) {
   if (request.method!=='GET') return new Response('{"error":"Method not allowed"}',{status:405,headers});
   const url=new URL(request.url);
   try {
-    const response=await fetcher(UPSTREAM+url.pathname+url.search,{method:'GET',headers:{Accept:'application/json','X-API-Client':'SpearHeadWeb/1.0'},redirect:'error',signal:AbortSignal.timeout(12000)});
+    // Workers supports manual/follow redirects, but not the browser's error mode.
+    const response=await fetcher(UPSTREAM+url.pathname+url.search,{method:'GET',headers:{Accept:'application/json','X-API-Client':'SpearHeadWeb/1.0'},redirect:'manual',signal:AbortSignal.timeout(12000)});
+    if (response.status>=300 && response.status<400) {
+      await response.body?.cancel();
+      return new Response('{"error":"Unexpected upstream redirect"}',{status:502,headers});
+    }
     if (response.headers.has('Retry-After')) headers.set('Retry-After',response.headers.get('Retry-After'));
     // Do not forward upstream cookies, credentials or unrelated headers.
     return new Response(response.body,{status:response.status,headers});
-  } catch {return new Response('{"error":"Upstream unavailable"}',{status:502,headers});}
+  } catch (error) {
+    console.warn('Public API relay failed:', error.name, error.message);
+    return new Response('{"error":"Upstream unavailable"}',{status:502,headers});
+  }
 }
 export default {fetch(request,env) { return handle(request,env); }};

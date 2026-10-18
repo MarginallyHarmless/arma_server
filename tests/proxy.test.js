@@ -20,9 +20,18 @@ test('proxy forwards only safe headers, preserves Retry-After and exposes CORS',
     assert.equal(url,'https://api.reforgermods.net'+path);options=opts;return new Response('{}',{status:429,headers:{'Retry-After':'90','Set-Cookie':'upstream'}});
   });
   assert.equal(options.headers.Authorization,undefined);assert.equal(options.headers.Cookie,undefined);assert.equal(result.status,429);
+  assert.equal(options.redirect,'manual');
   assert.equal(result.headers.get('Retry-After'),'90');assert.equal(result.headers.get('Set-Cookie'),null);assert.equal(result.headers.get('Access-Control-Allow-Origin'),origin);
 });
 test('proxy failures return a readable error with CORS',async()=>{
   const response=await handle(request(),env,async()=>{throw new Error('network failed');});
   assert.equal(response.status,502);assert.equal(response.headers.get('Access-Control-Allow-Origin'),origin);
+});
+test('proxy rejects upstream redirects without following or exposing the target',async()=>{
+  let requests=0;
+  const response=await handle(request(),env,async()=>{
+    requests++;return new Response(null,{status:302,headers:{Location:'https://other.example'}});
+  });
+  assert.equal(requests,1);assert.equal(response.status,502);assert.equal(response.headers.get('Location'),null);
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'),origin);
 });

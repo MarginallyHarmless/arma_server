@@ -46,6 +46,6 @@ export class ServerApi {
     const data=await this.get(`mods/${encodeURIComponent(s.scenarioModId)}/scenarios`);
     const row=data.data?.scenarios?.find(r=>r.gameId===s.scenarioId);
     const mode=row?.gameMode;
-    return {'#AR-Scenario_GameMode_Campaign':'Conflict','#AR-Scenario_GameMode_GameMaster':'Game Master'}[mode] || (typeof mode==='string' && !mode.startsWith('#') ? mode : null);
+    return {'#AR-Campaign_GamemodeName':'Conflict','#AR-Scenario_GameMode_Campaign':'Conflict','#AR-Scenario_GameMode_GameMaster':'Game Master'}[mode] || (typeof mode==='string' && !mode.startsWith('#') ? mode : null);
   }
 }
