@@ -14,9 +14,9 @@ A static dashboard for **[EU6] SpearHead CORE KUKAs EVERON**, ready for GitHub P
 
 ## Deployment status and browser access
 
-The frontend and optional proxy are prepared. **They are not published yet.** Local browser testing could open the public API directly, but a request from the webpage failed. This does not establish whether requests from your eventual GitHub Pages origin will be allowed. Test the real Pages URL first; if it cannot load data, deploy the included proxy.
+The frontend is published at **https://marginallyharmless.github.io/arma_server/**. GitHub Pages deployment and all 27 automated checks passed on 18 October 2026. **Live server data is not connected yet:** direct API requests failed from both the local preview and the published page in the test browser. The dashboard shows a connection issue and unknown counts until that connection is resolved. The included proxy is prepared for the next step.
 
-The proxy is a small serverless function, hosted separately from GitHub Pages. It does not need a rented VPS, Windows PC or always-running process. It relays public API responses; it does not run a minute-by-minute background collector or send alerts after the tab closes. No Cloudflare deployment has been performed as part of this package.
+The proxy is a small serverless function, hosted separately from GitHub Pages. It does not need a rented VPS, Windows PC or always-running process. It relays public API responses; it does not run a minute-by-minute background collector or send alerts after the tab closes. No Cloudflare deployment has been performed. Opening the separate Cloudflare dashboard was blocked by automatic approval review pending explicit account-access authorization.
 
 ## Publish on GitHub Pages
 
@@ -24,7 +24,7 @@ The proxy is a small serverless function, hosted separately from GitHub Pages. I
 2. Upload the **contents** of this folder to the root of the repository's `main` branch, including `.github/workflows/pages.yml`. Do not upload the containing ZIP itself. No personal history or credentials are included.
 3. Open the repository's **Settings → Pages**. Under **Build and deployment → Source**, choose **GitHub Actions**.
 4. Open **Actions → Deploy server watch to GitHub Pages → Run workflow**. The workflow runs the checks, prepares the static files and deploys them.
-5. The expected address for this repository is `https://marginallyharmless.github.io/arma_server/`. Publication must complete before this URL is available.
+5. The published address for this repository is `https://marginallyharmless.github.io/arma_server/`.
 6. Open the page. Successful monitoring shows a timestamped source reading. If it shows a connection issue, use the proxy steps below.
 
 The workflow runs on pushes and manual requests. It does **not** use scheduled GitHub Actions to poll the game server. GitHub's scheduled workflows have a minimum five-minute interval and are not a one-minute collector.
