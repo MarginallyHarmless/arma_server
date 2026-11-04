@@ -9,37 +9,16 @@ permissions:
   id-token: write
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Let an in-flight publish finish; cancelling can leave Pages locked.
+  cancel-in-progress: false
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      # Scoped to the recovery commit; normal pushes never run this step.
-      - name: Recover stalled Pages deployment
-        if: github.event.head_commit.message == 'Recover stalled Pages deployment'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          endpoint="repos/$GITHUB_REPOSITORY/pages/deployments/a2dcbd952e60e4f9ec47a16a654d34c5cd598fd3"
-          status=$(gh api "$endpoint" --jq '.status')
-          case "$status" in
-            succeed|deployment_failed|deployment_perms_error|deployment_content_failed|deployment_cancelled|deployment_lost) exit 0 ;;
-          esac
-          gh api --method POST "$endpoint/cancel"
-          for attempt in {1..24}; do
-            status=$(gh api "$endpoint" --jq '.status')
-            echo "Previous Pages deployment: $status"
-            case "$status" in
-              succeed|deployment_failed|deployment_perms_error|deployment_content_failed|deployment_cancelled|deployment_lost) exit 0 ;;
-            esac
-            sleep 5
-          done
-          echo "::error::GitHub has not released the cancelled Pages deployment."
-          exit 1
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -56,3 +35,4 @@ jobs:
         uses: actions/deploy-pages@v4
         with:
           artifact_name: github-pages-${{ github.run_attempt }}
+          timeout: 1200000
