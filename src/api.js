@@ -1,7 +1,10 @@
-import {FAVORITE,pickServer,parseSnapshot,parseHistory,retryDelay} from './core.js';
+import {FAVORITE,FAVORITE_ID,matches,pickServer,parseSnapshot,parseHistory,retryDelay} from './core.js';
 
 export class ServerApi {
-  constructor(base, fetcher=(...args)=>fetch(...args), clock=Date.now) { this.base=base.replace(/\/?$/,'/'); this.fetcher=fetcher; this.clock=clock; this.blockedUntil=0; }
+  constructor(base, fetcher=(...args)=>fetch(...args), clock=Date.now) {
+    this.base=base.replace(/\/?$/,'/'); this.fetcher=fetcher; this.clock=clock; this.blockedUntil=0;
+    this.lastServerId=FAVORITE_ID;
+  }
   async get(path) {
     if (this.clock()<this.blockedUntil) throw new Error('Data service rate limit. Waiting before retrying.');
     let response;
@@ -23,7 +26,13 @@ export class ServerApi {
       if (!Array.isArray(data.data)) throw new Error('The server list is unavailable.');
       rows.push(...data.data);
       const total=Number(data.meta?.totalPages || 1);
-      if (total<=page) return pickServer(rows,this.clock()).id;
+      if (total<=page) {
+        // A rename can remove a server from the old-name search without changing
+        // its API ID. Only fall back for an empty match set, never an ambiguity
+        // or service error. snapshot() still verifies both the ID and EU6 name.
+        if (!rows.some(r=>r && matches(r.name))) return this.lastServerId;
+        return pickServer(rows,this.clock()).id;
+      }
     }
     throw new Error('The search returned too many listings to choose safely.');
   }
@@ -33,6 +42,7 @@ export class ServerApi {
       try {
         const s=parseSnapshot(await this.get(`servers/${encodeURIComponent(id)}`),this.clock());
         if (s.id !== id) throw new Error('The server identity changed during the request.');
+        this.lastServerId=s.id;
         return s;
       } catch (e) { if (!attempt && (e.status===404 || /identity/.test(e.message))) continue; throw e; }
     }

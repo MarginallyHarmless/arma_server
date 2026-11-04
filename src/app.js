@@ -79,6 +79,7 @@ function renderStatus() {
 function renderSnapshot() {
   const s=snapshot;
   if (!s) return;
+  text('server-name',s.name.split('|')[0].trim());
   text('players',number(s.players));text('capacity',' / '+number(s.maxPlayers));text('queue',number(s.queue));text('queue-capacity',s.queueMax===null ? '' : ' / '+number(s.queueMax));
   const percentage=s.players!==null && s.maxPlayers ? Math.min(100,100*s.players/s.maxPlayers) : 0;
   $('occupancy').style.width=percentage+'%'; $('occupancy').parentElement.setAttribute('aria-label',`${number(s.players)} of ${number(s.maxPlayers)} player slots occupied`);

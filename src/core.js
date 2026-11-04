@@ -1,9 +1,12 @@
+// The existing relay allows this original search phrase. Keep it for rediscovery.
 export const FAVORITE = '[EU6] SpearHead CORE KUKAs EVERON';
+export const FAVORITE_ID = 'f39a4d0f-fa16-4a30-b6bb-60d82d3e3c5f';
 export const STORAGE_KEY = 'spearhead-eu6-watch-v1';
 export const numeric = v => typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null;
 const stamp = v => typeof v === 'string' && Number.isFinite(Date.parse(v)) ? Date.parse(v) : null;
+// EU6 and the community identify the server; mode/map labels can change.
 export const matches = name => typeof name === 'string' &&
-  (name.toLowerCase() === FAVORITE.toLowerCase() || name.toLowerCase().startsWith(FAVORITE.toLowerCase() + ' |'));
+  /^\[EU6\]\s+SpearHead(?:\s|\||$)/i.test(name.trim());
 
 export function pickServer(rows, now = Date.now()) {
   const named = rows.filter(r => r && matches(r.name));

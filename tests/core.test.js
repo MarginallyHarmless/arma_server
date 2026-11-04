@@ -1,13 +1,16 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {FAVORITE,matches,pickServer,parseSnapshot,fresh,ageOf,parseHistory,AlertGate,retryDelay,restore,safeImage} from '../src/core.js';
+import {FAVORITE,FAVORITE_ID,matches,pickServer,parseSnapshot,fresh,ageOf,parseHistory,AlertGate,retryDelay,restore,safeImage} from '../src/core.js';
 import {ServerApi} from '../src/api.js';
 const now=Date.parse('2026-10-18T17:00:00Z');
 const row=(changes={})=>({id:'a',name:FAVORITE,online:true,present:true,lastSeen:new Date(now).toISOString(),...changes});
 const raw=(changes={},dataset={})=>({server:{...row(),players:100,maxPlayers:128,queue:4,queueMax:50,joinable:true,sessionId:'session-a',scenarioId:'map-a',...changes},dataset:{snapshotAgeSeconds:10,...dataset}});
 const snap=(changes={},at=now)=>parseSnapshot(raw({lastSeen:new Date(at).toISOString(),...changes}),at);
 test('favorite matching excludes similarly named EU servers',()=>{
-  assert(matches(FAVORITE+' | Crossplay'));assert(matches(FAVORITE.toLowerCase()));assert(!matches(FAVORITE+' 2'));assert(!matches(FAVORITE.replace('EU6','EU5')));
+  assert(matches(FAVORITE+' | Crossplay'));assert(matches(FAVORITE.toLowerCase()));
+  assert(matches(FAVORITE.replace('CORE','LORE')+' | 1PP | Crossplay'));
+  assert(!matches(FAVORITE.replace('EU6','EU5')));assert(!matches(FAVORITE.replace('EU6','EU60')));
+  assert(!matches(FAVORITE.replace('SpearHead','SpearHead2')));assert(!matches('[EU6] W.C.S. Everon'));
 });
 test('discovery follows new active listing and ignores old IP',()=>{
   const selected=pickServer([row({id:'old',host:'old',lastSeen:new Date(now-600000).toISOString()}),row({id:'new',host:'new'})],now);
@@ -77,4 +80,38 @@ test('a disappeared detail listing is rediscovered once',async()=>{
     return url.endsWith('/old') ? new Response('',{status:404}) : Response.json(raw({id:'new'}));
   },()=>now);
   assert.equal((await api.snapshot()).id,'new');assert.equal(searches,2);
+});
+test('renamed EU6 loads by its verified ID when the old-name search is empty',async()=>{
+  const calls=[], name=FAVORITE.replace('CORE','LORE')+' | 1PP | Crossplay';
+  const api=new ServerApi('https://example.test/v2/',async url=>{
+    calls.push(url);
+    return Response.json(url.includes('?search=') ? {data:[],meta:{totalPages:0}} : raw({id:FAVORITE_ID,name,players:128,queue:16}));
+  },()=>now);
+  const s=await api.snapshot();
+  assert.equal(s.id,FAVORITE_ID);assert.equal(s.name,name);assert.equal(s.players,128);assert.equal(s.queue,16);assert(fresh(s,now));
+  assert.equal(calls.length,2);assert(calls[1].endsWith('/'+FAVORITE_ID));
+});
+test('rename fallback follows the last successfully discovered ID',async()=>{
+  let renamed=false;const calls=[];
+  const api=new ServerApi('https://example.test/v2/',async url=>{
+    calls.push(url);
+    if (url.includes('?search=')) return Response.json({data:renamed?[]:[row({id:'replacement'})]});
+    return Response.json(raw({id:'replacement',name:renamed?FAVORITE.replace('CORE','LORE'):FAVORITE,host:renamed?'new-ip':'old-ip'}));
+  },()=>now);
+  await api.snapshot();renamed=true;
+  assert.equal((await api.snapshot()).id,'replacement');assert(calls.at(-1).endsWith('/replacement'));
+});
+test('rename fallback rejects mismatched IDs and other communities',async()=>{
+  for (const change of [{id:'unrelated'},{name:'[EU6] W.C.S. Everon'},{name:FAVORITE.replace('EU6','EU5')}]) {
+    const api=new ServerApi('https://example.test/v2/',async url=>Response.json(
+      url.includes('?search=') ? {data:[]} : raw({id:FAVORITE_ID,...change})
+    ),()=>now);
+    await assert.rejects(api.snapshot(),/identity/);
+  }
+});
+test('rename fallback does not hide ambiguous listings or rate limits',async()=>{
+  for (const response of [()=>Response.json({data:[row(),row({id:'b'})]}),()=>new Response('',{status:429})]) {
+    let calls=0;const api=new ServerApi('https://example.test/v2/',async()=>{calls++;return response();},()=>now);
+    await assert.rejects(api.snapshot(),/More than one|rate limit/);assert.equal(calls,1);
+  }
 });

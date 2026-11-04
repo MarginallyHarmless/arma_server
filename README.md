@@ -1,6 +1,6 @@
 # SpearHead Server Watch — web edition
 
-A static dashboard for **[EU6] SpearHead CORE KUKAs EVERON**, ready for GitHub Pages. No Windows app, build dependencies, API key or database is needed for the frontend.
+A static dashboard for **[EU6] SpearHead**, currently named **LORE KUKAs EVERON**, hosted on GitHub Pages. No Windows app, build dependencies, API key or database is needed for the frontend.
 
 ## What is ready
 
@@ -9,11 +9,12 @@ A static dashboard for **[EU6] SpearHead CORE KUKAs EVERON**, ready for GitHub P
 - Queue alerts, optional sound and browser notifications.
 - **Status checks every 60 seconds while the page is visible.** Overdue checks run when you return to the tab. Browsers can suspend background pages, so this is not a guaranteed background timer. Slow requests, service failures and rate limits delay checks.
 - API history refreshes at most every 5 minutes per selected range. It is separate from the 60-second player/queue checks and remains at the provider's bucket resolution.
-- Server discovery on every status check follows the exact EU6 name prefix, rather than pinning an IP address. Multiple current matches pause monitoring. If the server changes its name, update `FAVORITE` in `src/core.js` and the matching constant in `proxy/worker.js`.
+- Every status check searches the original name using the existing relay. If the search no longer matches after a rename, it retrieves the last verified server ID (initially `FAVORITE_ID` in `src/core.js`). The response must match that ID and the `[EU6] SpearHead` prefix. Multiple matching listings still pause monitoring. Addresses are read from each response; no IP is pinned. The heading displays the current server name.
+- The relay's search phrase remains the original CORE name for compatibility with the deployed Worker. If both the server ID and name change, update `FAVORITE_ID`, or update `FAVORITE` in `src/core.js` and `proxy/worker.js` and redeploy both components.
 
 ## Deployment status and browser access
 
-The dashboard is live at **https://marginallyharmless.github.io/arma_server/** and reads real server data through `https://spearhead-watch-api.bogdandraghici024.workers.dev/v2/`. Live player and queue counts, scenario details and 24-hour population history were verified on 18 October 2026. All 20 automated checks pass.
+The dashboard is live at **https://marginallyharmless.github.io/arma_server/** and reads real server data through `https://spearhead-watch-api.bogdandraghici024.workers.dev/v2/`. The CORE-to-LORE rename was confirmed on 4 November 2026; the API server ID remained unchanged. All 24 automated checks pass.
 
 The proxy is a small serverless function deployed in the owner's Cloudflare account, separately from GitHub Pages. It does not need a rented VPS, Windows PC or always-running process. It relays public API responses; it does not run a minute-by-minute background collector or send alerts after the tab closes. Direct browser requests failed in testing; the configured proxy resolves that connection.
 

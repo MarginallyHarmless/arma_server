@@ -1,4 +1,14 @@
-# Validation — 18 October 2026
+# Validation
+
+## 4 November 2026: server rename
+
+- Confirmed the original CORE search returned zero matches while the API listed `[EU6] SpearHead LORE KUKAs EVERON` under the same server ID, `f39a4d0f-fa16-4a30-b6bb-60d82d3e3c5f`.
+- Added verified-ID fallback for empty name searches, retained ID and EU6/community validation, and populated the heading from live data. Ambiguity and service failures do not trigger the fallback.
+- All 24 deterministic checks pass, including rename recovery, remembering a replacement ID, rejecting another server, and preserving ambiguity/rate-limit errors.
+- The existing deployed relay supports the detail lookup; no Worker redeployment is required for this fix. A simultaneous name and ID change remains a documented configuration limitation.
+- At 19:04 UTC, the updated ServerApi completed live discovery, renamed-server detail lookup, 24-hour history and scenario-mode requests through the deployed relay with the GitHub Pages Origin. All returned HTTP 200 with the correct CORS header: 128/128 players, queue 19/50, Conflict, 288 history readings, fresh data. This was a protocol/integration check; browser UI automation was unavailable in this session.
+
+## 18 October 2026
 
 ## Completed
 
