@@ -7,6 +7,7 @@
 - All 24 deterministic checks pass, including rename recovery, remembering a replacement ID, rejecting another server, and preserving ambiguity/rate-limit errors.
 - The existing deployed relay supports the detail lookup; no Worker redeployment is required for this fix. A simultaneous name and ID change remains a documented configuration limitation.
 - At 19:04 UTC, the updated ServerApi completed live discovery, renamed-server detail lookup, 24-hour history and scenario-mode requests through the deployed relay with the GitHub Pages Origin. All returned HTTP 200 with the correct CORS header: 128/128 players, queue 19/50, Conflict, 288 history readings, fresh data. This was a protocol/integration check; browser UI automation was unavailable in this session.
+- Deployment run `41893423833` initially timed out after ten minutes in GitHub's `updating_pages` state. Retrying found two artifacts with the same default name. The workflow now names its upload and deployment artifact by `github.run_attempt`, so a retry selects only its own package.
 
 ## 18 October 2026
 
