@@ -12,41 +12,30 @@ concurrency:
   # Let an in-flight publish finish; cancelling can leave Pages locked.
   cancel-in-progress: false
 jobs:
-  recover:
-    if: github.event.head_commit.message == 'Retry the original Pages deployment without duplicate artifacts'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      pages: write
-      actions: write
-    steps:
-      - name: Inspect Pages state and remove duplicate generated uploads
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          repo="repos/$GITHUB_REPOSITORY"
-          run="$repo/actions/runs/41893423833"
-          expected="a2dcbd952e60e4f9ec47a16a654d34c5cd598fd3"
-          gh api "$run" > run.json
-          jq -e --arg sha "$expected" '.head_sha == $sha and .status == "completed" and .conclusion == "failure"' run.json
-          gh api "$repo/pages/deployments/$expected"
-          gh api "$run/artifacts" > artifacts.json
-          for artifact in 13354533042 13354014632; do
-            jq -e --argjson id "$artifact" --arg sha "$expected" '.artifacts[] | select(.id == $id and .name == "github-pages" and .workflow_run.id == 41893423833 and .workflow_run.head_sha == $sha)' artifacts.json
-            gh api --method DELETE "$repo/actions/artifacts/$artifact"
-            echo "Removed duplicate generated artifact $artifact"
-          done
   deploy:
-    if: github.event.head_commit.message != 'Retry the original Pages deployment without duplicate artifacts'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Clear the stale Pages deployment cancellation
+        if: github.event.head_commit.message == 'Clear stale Pages cancellation and publish'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          endpoint="repos/$GITHUB_REPOSITORY/pages/deployments/a2dcbd952e60e4f9ec47a16a654d34c5cd598fd3"
+          gh api "$endpoint"
+          if gh api --method POST "$endpoint/cancel" > cancel-result.txt 2>&1; then
+            echo "Pages cancellation acknowledged"
+          else
+            cat cancel-result.txt
+            if ! grep -q "as it's finished" cancel-result.txt; then
+              exit 1
+            fi
+          fi
+          gh api "$endpoint"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
